@@ -1,5 +1,3 @@
-# TODOS - Auth to HF (huggingface cli login) and OpenAI (openai.api_key)
-
 This is a Python application that allows you to evaluate how well LLMs handle the order dependency problem, drawing heavily from the paper [Large Language Models Are not Robust Multiple Choice Selectors](https://openreview.net/pdf?id=shr9PXz7T0) by Zheng, et al. It is written to easily handle multiple models with limited extra work.
 
 # Installation
