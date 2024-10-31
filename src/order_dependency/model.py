@@ -21,4 +21,4 @@ class Model:
             model=self.model_name,
             messages=question.gpt_prompt,
         )
-        return response.choices[0].text
+        return response.choices[0].message.content[0]

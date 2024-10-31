@@ -62,6 +62,18 @@ class MultipleChoiceQuestion:
         self.answers = deepcopy(self.original_answers)
         self.correct_answer_index = self.original_correct_answer_index
 
+    def to_dict(self) -> dict:
+        """
+        Returns a dictionary representation of the MultipleChoiceQuestion object.
+        """
+        return {
+            "question_text": self.question_text,
+            "topic": self.topic,
+            "answers": self.answers,
+            "correct_answer_index": self.correct_answer_index,
+            "correct_answer": self.correct_answer,
+        }
+
 
 class Dataset:
     def __init__(self, hf_url: str = MMLU_TEST):

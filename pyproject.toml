@@ -5,13 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "click>=8.1.7",
     "duckdb>=1.1.2",
     "openai>=1.53.0",
     "python-dotenv>=1.0.1",
 ]
 
 [project.scripts]
-hello = "order_dependency:hello"
+run_analysis = "order_dependency:run_full_analysis"
 
 [build-system]
 requires = ["hatchling"]

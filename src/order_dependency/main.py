@@ -4,6 +4,7 @@ Application code to run analyses
 
 # Std lib imports
 from enum import Enum
+from os import CLD_CONTINUED
 from typing import TypedDict
 import json
 import time
@@ -28,9 +29,10 @@ class Ordering(Enum):
 
 
 class IndividualResult(TypedDict):
-    question: MultipleChoiceQuestion  # This will have text, orig position, etc.
-    ordering: Ordering
+    question: dict  # dictionary representation of MCQ
+    ordering: str  # Ordering.name
     llm_response: int  # should be converted from alpha ID to int position
+    llm_response_alpha: str
     discrepancy: bool
 
 
@@ -40,7 +42,7 @@ class AnalysisResult(TypedDict):
     ordering: Ordering
     discrepancy_count: int
     accuracy: float
-    r_std: float
+    # r_std: float
 
 
 def _setup(model_name: str, data_limit: int, random: bool) -> tuple[Dataset, Model]:
@@ -61,29 +63,31 @@ def _run_single_analysis(
     for question in dataset.data:
         pred_answer = model.ask_question(question)  # Should be A, B, C, D
         if pred_answer not in ["A", "B", "C", "D"]:
-            pred_answer = None
+            pred_answer_idx = None
         else:
-            pred_answer = ord(pred_answer) - 65
+            pred_answer_idx = ord(pred_answer) - 65
         individual_results.append(
             IndividualResult(
-                question=question,
-                ordering=Ordering.BASELINE,
-                llm_response=pred_answer,
-                discrepancy=question.correct_answer_index == pred_answer,
+                question=question.to_dict(),
+                ordering=ordering.name,
+                llm_response=pred_answer_idx,
+                llm_response_alpha=pred_answer,
+                discrepancy=question.correct_answer_index != pred_answer_idx,
             )
         )
     return AnalysisResult(
         model_name=model.model_name,
         individual_results=individual_results,
-        ordering=ordering,
+        ordering=ordering.name,
         discrepancy_count=sum(result["discrepancy"] for result in individual_results),
         accuracy=_calculate_accuracy(individual_results),
-        r_std=_calculate_r_std(individual_results),
     )
 
 
 def _calculate_accuracy(results: list[IndividualResult]) -> float:
-    return sum(result["discrepancy"] for result in results) / len(results) * 100
+    return (
+        [result["discrepancy"] for result in results].count(False) / len(results) * 100
+    )
 
 
 def _calculate_r_std(results: list[IndividualResult]) -> float:
@@ -91,11 +95,17 @@ def _calculate_r_std(results: list[IndividualResult]) -> float:
 
 
 def _export_results(results: list[AnalysisResult]) -> None:
-    with open(f"output/run_{time.time()}.jsonl", "w") as f:
+    with open(
+        f"output/run_{time.time()}_{len(results[0]['individual_results'])}_Qs.jsonl",
+        "w",
+    ) as f:
         json.dump(results, f)
 
 
-# TODO: only if you have rate limits that can handle eveyrthing at once
+@click.command()
+@click.option("--model_name", default="gpt-3.5-turbo", help="Model name")
+@click.option("--data_limit", default=20, help="Number of questions to use")
+@click.option("--random", default=True, help="Whether to use random questions")
 def run_full_analysis(
     model_name: str = "gpt-3.5-turbo", data_limit: int = 20, random: bool = True
 ) -> None:
@@ -103,4 +113,5 @@ def run_full_analysis(
     results: list[AnalysisResult] = [
         _run_single_analysis(dataset, model, ordering) for ordering in Ordering
     ]
+    click.echo(f"Results: {results}")
     _export_results(results)
