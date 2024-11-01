@@ -4,7 +4,6 @@ Application code to run analyses
 
 # Std lib imports
 from enum import Enum
-from os import CLD_CONTINUED
 from typing import TypedDict
 import json
 import time
@@ -14,7 +13,7 @@ import click
 from dotenv import load_dotenv
 
 # Internal imports
-from order_dependency.dataset import Dataset, MultipleChoiceQuestion
+from order_dependency.dataset import Dataset
 from order_dependency.model import Model
 
 load_dotenv()
